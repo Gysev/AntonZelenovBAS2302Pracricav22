@@ -2,6 +2,9 @@ stages:
   - build
   - test
 
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
 build:
   stage: build
   image: eclipse-temurin:21-jdk
@@ -12,16 +15,19 @@ build:
     when: always
     paths:
       - target/*.jar
+    expire_in: 1 week
 
 sast_semgrep:
   stage: test
-  image: returntocorp/semgrep:latest
+  image: python:3.12-slim
   needs: ["build"]
   script:
-    - semgrep --config auto --sarif --output gl-sast-report.sarif || true
+    - pip install --no-cache-dir semgrep
+    - semgrep scan --config auto --sarif --output gl-sast-report.sarif || true
   artifacts:
     when: always
     reports:
       sast: gl-sast-report.sarif
     paths:
       - gl-sast-report.sarif
+    expire_in: 1 week

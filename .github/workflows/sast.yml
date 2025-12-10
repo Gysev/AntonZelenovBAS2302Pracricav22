@@ -3,8 +3,9 @@ name: build-and-sast
 on:
   pull_request:
     branches: [ "main" ]
-
-permissions:
+  push:
+    branches: [ "task3", "sast-task3", "sast-task3-3", "task3-sast" ]
+  workflow_dispatch:permissions:
   contents: read
   security-events: write
 

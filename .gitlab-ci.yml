@@ -1,11 +1,6 @@
-workflow:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: always
-    - when: never
-
 stages:
   - build
+  - test
 
 build:
   stage: build
@@ -17,3 +12,16 @@ build:
     when: always
     paths:
       - target/*.jar
+
+sast_semgrep:
+  stage: test
+  image: returntocorp/semgrep:latest
+  needs: ["build"]
+  script:
+    - semgrep --config auto --sarif --output gl-sast-report.sarif || true
+  artifacts:
+    when: always
+    reports:
+      sast: gl-sast-report.sarif
+    paths:
+      - gl-sast-report.sarif

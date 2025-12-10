@@ -16,10 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     container: eclipse-temurin:21-jdk
     steps:
-      - uses: actions/checkout@v4
-      - run: chmod +x mvnw
-      - run: ./mvnw -B clean test package
-      - uses: actions/upload-artifact@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      - name: Build, test, package
+        run: ./mvnw -B clean test package
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v4
         with:
           name: jar
           path: ./target/*.jar
@@ -31,7 +38,8 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Run Semgrep (SARIF)
         uses: returntocorp/semgrep-action@v1
@@ -39,6 +47,32 @@ jobs:
           config: auto
           args: semgrep scan --sarif --output=semgrep.sarif
         continue-on-error: true
+
+      - name: Show SARIF summary
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          p="semgrep.sarif"
+          d=json.load(open(p,encoding="utf-8"))
+          runs=d.get("runs",[])
+          results=(runs[0].get("results",[]) if runs else [])
+          print("RESULTS:", len(results))
+          for r in results[:30]:
+            rule=r.get("ruleId")
+            msg=r.get("message",{}).get("text","")
+            locs=r.get("locations",[])
+            loc=locs[0].get("physicalLocation",{}).get("artifactLocation",{}).get("uri","") if locs else ""
+            line=locs[0].get("physicalLocation",{}).get("region",{}).get("startLine","") if locs else ""
+            print(f"- {rule} {loc}:{line} :: {msg[:120]}")
+          PY
+
+      - name: Upload SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sarif
+          path: semgrep.sarif
 
       - name: Upload SARIF to GitHub
         if: always()

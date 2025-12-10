@@ -24,6 +24,7 @@ sast_semgrep:
   script:
     - pip install --no-cache-dir semgrep
     - semgrep scan --config auto --sarif --output gl-sast-report.sarif || true
+    - ls -la
   artifacts:
     when: always
     reports:

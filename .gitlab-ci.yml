@@ -2,6 +2,9 @@ stages:
   - build
   - test
 
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
 build:
   stage: build
   image: eclipse-temurin:21-jdk
@@ -14,18 +17,16 @@ build:
       - target/*.jar
     expire_in: 1 week
 
-sast_semgrep:
+dependency_check:
   stage: test
-  image: returntocorp/semgrep:latest
+  image: eclipse-temurin:21-jdk
   needs: ["build"]
   script:
-    - semgrep scan --config auto --sarif --output gl-sast-report.sarif .
-    - test -s gl-sast-report.sarif || printf '{"version":"2.1.0","runs":[]}' > gl-sast-report.sarif
+    - chmod +x mvnw || true
+    - ./mvnw -B org.owasp:dependency-check-maven:check
   artifacts:
     when: always
-    reports:
-      sast: gl-sast-report.sarif
     paths:
-      - gl-sast-report.sarif
+      - target/dependency-check-report.html
+      - target/dependency-check-report.json
     expire_in: 1 week
-  allow_failure: true

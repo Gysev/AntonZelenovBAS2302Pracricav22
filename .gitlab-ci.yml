@@ -9,8 +9,6 @@ stages:
 
 build:
   stage: build
-  tags:
-    - saas-linux-small-amd64
   image: eclipse-temurin:21-jdk
   script:
     - chmod +x mvnw
@@ -18,4 +16,4 @@ build:
   artifacts:
     when: always
     paths:
-      - ./target/*.jar
+      - target/*.jar

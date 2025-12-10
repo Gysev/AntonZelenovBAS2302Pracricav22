@@ -1,0 +1,31 @@
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  image: eclipse-temurin:21-jdk
+  script:
+    - chmod +x mvnw || true
+    - ./mvnw -B clean test package
+  artifacts:
+    when: always
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
+sast_semgrep:
+  stage: test
+  image: returntocorp/semgrep:latest
+  needs: ["build"]
+  script:
+    - semgrep scan --config auto --sarif --output gl-sast-report.sarif .
+    - test -s gl-sast-report.sarif || printf '{"version":"2.1.0","runs":[]}' > gl-sast-report.sarif
+  artifacts:
+    when: always
+    reports:
+      sast: gl-sast-report.sarif
+    paths:
+      - gl-sast-report.sarif
+    expire_in: 1 week
+  allow_failure: true

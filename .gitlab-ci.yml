@@ -11,7 +11,7 @@ build:
   stage: build
   image: eclipse-temurin:21-jdk
   script:
-    - chmod +x mvnw
+    - chmod +x mvnw || true
     - ./mvnw -B clean test package
   artifacts:
     when: always

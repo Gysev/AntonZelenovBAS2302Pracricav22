@@ -5,7 +5,9 @@ on:
     branches: [ "main" ]
   push:
     branches: [ "task3", "sast-task3", "sast-task3-3", "task3-sast" ]
-  workflow_dispatch:permissions:
+  workflow_dispatch:
+
+permissions:
   contents: read
   security-events: write
 
@@ -13,7 +15,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container: eclipse-temurin:21-jdk
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,7 +34,6 @@ jobs:
   sast:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4

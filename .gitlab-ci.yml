@@ -36,3 +36,23 @@ semgrep-sast:
     paths:
       - gl-sast-report.json
     expire_in: 1 week
+
+dependency-check-sca:
+  stage: test
+  tags:
+    - saas-linux-small-amd64
+  image: eclipse-temurin:21-jdk
+  needs:
+    - job: build
+      artifacts: false
+  variables:
+    MAVEN_OPTS: "-Dmaven.wagon.http.retryHandler.count=3"
+  script:
+    - chmod +x mvnw
+    - ./mvnw -B dependency-check:check
+  artifacts:
+    when: always
+    paths:
+      - target/dependency-check-report.html
+    expire_in: 1 week
+  allow_failure: true

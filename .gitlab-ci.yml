@@ -1,0 +1,38 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  tags:
+    - saas-linux-small-amd64
+  image: eclipse-temurin:21-jdk
+  script:
+    - chmod +x mvnw
+    - ./mvnw -B verify
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
+semgrep-sast:
+  stage: test
+  tags:
+    - saas-linux-small-amd64
+  image: semgrep/semgrep
+  needs:
+    - job: build
+      artifacts: false
+  script:
+    - semgrep scan --config auto --gitlab-sast --gitlab-sast-output=gl-sast-report.json
+  artifacts:
+    when: always
+    reports:
+      sast: gl-sast-report.json
+    paths:
+      - gl-sast-report.json
+    expire_in: 1 week

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: eclipse-temurin:21-jdk
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: |
+          chmod +x mvnw
+          ./mvnw -q -B verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jar
+          path: target/*.jar
+
+  semgrep:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep SAST
+        run: semgrep scan --config auto --sarif --output semgrep.sarif
+        continue-on-error: true
+      - uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
